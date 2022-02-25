@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import warnings
 from datetime import datetime
 from typing import Dict, Optional
 
@@ -40,13 +41,14 @@ class Entity:
         labels (optional): User-defined metadata in dictionary form.
     """
 
-    _name: str
-    _value_type: ValueType
-    _description: str
-    _join_key: str
-    _labels: Dict[str, str]
-    _created_timestamp: Optional[datetime]
-    _last_updated_timestamp: Optional[datetime]
+    name: str
+    value_type: ValueType
+    join_key: str
+    description: str
+    tags: Dict[str, str]
+    owner: str
+    created_timestamp: Optional[datetime]
+    last_updated_timestamp: Optional[datetime]
 
     @log_exceptions
     def __init__(
@@ -58,21 +60,25 @@ class Entity:
         labels: Optional[Dict[str, str]] = None,
     ):
         """Creates an Entity object."""
-        self._name = name
-        self._description = description
-        self._value_type = value_type
-        if join_key:
-            self._join_key = join_key
-        else:
-            self._join_key = name
+        self.name = name
+        self.value_type = value_type
+        self.join_key = join_key if join_key else name
+        self.description = description
 
-        if labels is None:
-            self._labels = dict()
+        if labels is not None:
+            self.tags = labels
+            warnings.warn(
+                (
+                    "The parameter 'labels' is being deprecated. Please use 'tags' instead. "
+                    "Feast 0.20 and onwards will not support the parameter 'labels'."
+                ),
+                DeprecationWarning,
+            )
         else:
-            self._labels = labels
+            self.tags = labels or tags or {}
 
-        self._created_timestamp: Optional[datetime] = None
-        self._last_updated_timestamp: Optional[datetime] = None
+        self.created_timestamp = None
+        self.last_updated_timestamp = None
 
     def __hash__(self) -> int:
         return hash((id(self), self.name))
@@ -94,90 +100,6 @@ class Entity:
 
     def __str__(self):
         return str(MessageToJson(self.to_proto()))
-
-    @property
-    def name(self) -> str:
-        """
-        Gets the name of this entity.
-        """
-        return self._name
-
-    @name.setter
-    def name(self, name):
-        """
-        Sets the name of this entity.
-        """
-        self._name = name
-
-    @property
-    def description(self) -> str:
-        """
-        Gets the description of this entity.
-        """
-        return self._description
-
-    @description.setter
-    def description(self, description):
-        """
-        Sets the description of this entity.
-        """
-        self._description = description
-
-    @property
-    def join_key(self) -> str:
-        """
-        Gets the join key of this entity.
-        """
-        return self._join_key
-
-    @join_key.setter
-    def join_key(self, join_key):
-        """
-        Sets the join key of this entity.
-        """
-        self._join_key = join_key
-
-    @property
-    def value_type(self) -> ValueType:
-        """
-        Gets the type of this entity.
-        """
-        return self._value_type
-
-    @value_type.setter
-    def value_type(self, value_type: ValueType):
-        """
-        Sets the type of this entity.
-        """
-        self._value_type = value_type
-
-    @property
-    def labels(self) -> Dict[str, str]:
-        """
-        Gets the labels of this entity.
-        """
-        return self._labels
-
-    @labels.setter
-    def labels(self, labels: Dict[str, str]):
-        """
-        Sets the labels of this entity.
-        """
-        self._labels = labels
-
-    @property
-    def created_timestamp(self) -> Optional[datetime]:
-        """
-        Gets the created_timestamp of this entity.
-        """
-        return self._created_timestamp
-
-    @property
-    def last_updated_timestamp(self) -> Optional[datetime]:
-        """
-        Gets the last_updated_timestamp of this entity.
-        """
-        return self._last_updated_timestamp
 
     def is_valid(self):
         """
