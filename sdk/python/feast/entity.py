@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import warnings
 from datetime import datetime
 from typing import Dict, Optional
 
@@ -45,7 +44,7 @@ class Entity:
     value_type: ValueType
     join_key: str
     description: str
-    tags: Dict[str, str]
+    labels: Dict[str, str]
     owner: str
     created_timestamp: Optional[datetime]
     last_updated_timestamp: Optional[datetime]
@@ -65,17 +64,10 @@ class Entity:
         self.join_key = join_key if join_key else name
         self.description = description
 
-        if labels is not None:
-            self.tags = labels
-            warnings.warn(
-                (
-                    "The parameter 'labels' is being deprecated. Please use 'tags' instead. "
-                    "Feast 0.20 and onwards will not support the parameter 'labels'."
-                ),
-                DeprecationWarning,
-            )
+        if labels is None:
+            self.labels = dict()
         else:
-            self.tags = labels or tags or {}
+            self.labels = labels
 
         self.created_timestamp = None
         self.last_updated_timestamp = None
@@ -163,9 +155,9 @@ class Entity:
         )
 
         if entity_proto.meta.HasField("created_timestamp"):
-            entity._created_timestamp = entity_proto.meta.created_timestamp.ToDatetime()
+            entity.created_timestamp = entity_proto.meta.created_timestamp.ToDatetime()
         if entity_proto.meta.HasField("last_updated_timestamp"):
-            entity._last_updated_timestamp = (
+            entity.last_updated_timestamp = (
                 entity_proto.meta.last_updated_timestamp.ToDatetime()
             )
 
@@ -179,10 +171,10 @@ class Entity:
             An EntityV2Proto protobuf.
         """
         meta = EntityMetaProto()
-        if self._created_timestamp:
-            meta.created_timestamp.FromDatetime(self._created_timestamp)
-        if self._last_updated_timestamp:
-            meta.last_updated_timestamp.FromDatetime(self._last_updated_timestamp)
+        if self.created_timestamp:
+            meta.created_timestamp.FromDatetime(self.created_timestamp)
+        if self.last_updated_timestamp:
+            meta.last_updated_timestamp.FromDatetime(self.last_updated_timestamp)
 
         spec = EntitySpecProto(
             name=self.name,
@@ -249,5 +241,5 @@ class Entity:
         self.value_type = entity.value_type
         self.labels = entity.labels
         self.join_key = entity.join_key
-        self._created_timestamp = entity.created_timestamp
-        self._last_updated_timestamp = entity.last_updated_timestamp
+        self.created_timestamp = entity.created_timestamp
+        self.last_updated_timestamp = entity.last_updated_timestamp

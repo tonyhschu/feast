@@ -32,7 +32,7 @@ class FeatureService:
 
     name: str
     feature_view_projections: List[FeatureViewProjection]
-    description: str
+    description: Optional[str] = None
     tags: Dict[str, str]
     created_timestamp: Optional[datetime] = None
     last_updated_timestamp: Optional[datetime] = None
